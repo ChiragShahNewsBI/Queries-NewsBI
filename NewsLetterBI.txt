@@ -1,0 +1,227 @@
+#SFMC News Traffic
+
+
+CREATE OR REPLACE TABLE `i-dss-news-data.nm_temp.sfmc_news_traffic` AS
+WITH cmpgn_data_salesforce AS(
+SELECT 
+cbs_reg_user_id_cd, 
+src_system_id,
+email_subject_desc,  
+campaign_email_nm,  
+sent_dt,  
+bounce_dt,
+sent_dt_ut, 
+EXTRACT(DATE FROM first_open_dt_ut) AS open_dt,
+first_open_dt_ut, 
+EXTRACT(DATE FROM first_click_dt_ut) AS click_dt,
+first_click_dt_ut,  
+job_id, 
+batch_id,
+ case when campaign_email_nm LIKE '%CBS Mornings%' 
+       then 'CBS Mornings - Eye Opener'
+       when campaign_email_nm LIKE '%America Decides%'  
+       then 'America Decides'
+       when campaign_email_nm LIKE '%Breaking News%'  
+       then 'Breaking News'
+       when campaign_email_nm LIKE '%The Uplift%'  
+       then 'The Uplift'
+       when campaign_email_nm LIKE '%Sunday Morning%'  
+       then 'Sunday Morning'
+       when campaign_email_nm LIKE '%48 Hours%'  
+       then '48 Hours'
+       when campaign_email_nm LIKE '%60 Minutes%'  
+       then '60 Minutes'
+       --else 'Other' 
+       end as Show
+FROM `i-dss-news-data.dw_vw.vw_news_sfmc_campaign_performance_day`  
+WHERE sent_dt BETWEEN '2023-05-01' AND CURRENT_DATE()
+AND campaign_email_nm NOT IN ('cbsnews_welcome',
+'cbsnews_welcome_frictionless',
+'CBS Essentials Welcome Email',
+'cbsnews_password',
+'cbsnews_clc',
+'cbsnews_prism_expiration_stage',
+'prism_expiration_notification',
+'cbsnews_clc_stage',
+'cbsnews_password_stage',
+'staging_cbsnews_welcome')
+
+--AND day_dt BETWEEN DATE_SUB(CURRENT_DATE, INTERVAL 3 DAY) AND CURRENT_DATE
+AND campaign_email_nm not like '%180DayClicked%'
+--AND day_dt BETWEEN DATE_SUB(CURRENT_DATE, INTERVAL 3 DAY) AND CURRENT_DATE
+GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13
+)
+
+SELECT
+  day_dt
+, cdsf.cbs_reg_user_id_cd
+, cdsf.email_subject_desc
+, visit_session_id
+, visit_nbr
+, page_nm
+, post_evar10_desc AS page_type
+, post_page_nm
+, CDSF.sent_dt
+, cdsf.campaign_email_nm
+, cdsf.sent_dt_ut
+, cdsf.bounce_dt
+, cdsf.first_open_dt_ut
+, cdsf.first_click_dt_ut
+, cdsf.open_dt
+, cdsf.click_dt
+, referrer_type_nm
+, post_evar3_desc
+, post_evar1_desc
+, post_evar69_desc
+, COUNT(DISTINCT cbs_reg_user_id_cd) AS receipients
+, COUNT(DISTINCT post_evar69_desc) AS unique_visitors
+, CASE WHEN post_evar1_desc LIKE 'cbsnews_site_desktop' 
+       then 'Desktop'
+       WHEN post_evar1_desc LIKE 'cbsnews_site_mweb'  
+       then 'Mobile Web'
+       WHEN post_evar1_desc LIKE 'cbsnews_app_and'  
+       then 'Mobile App Android'
+       WHEN post_evar1_desc LIKE 'cbsnews_app_ios'  
+       then 'Mobile App iOS'
+       else 'Other' 
+       end as Platform
+,COUNT(DISTINCT CASE WHEN event_dt_ut BETWEEN 
+CASE 
+  WHEN click_dt IS NOT NULL THEN first_click_dt_ut
+  WHEN open_dt IS NOT NULL THEN first_open_dt_ut
+  ELSE sent_dt_ut END
+AND DATE_ADD(CASE 
+  WHEN click_dt IS NOT NULL THEN first_click_dt_ut
+  WHEN open_dt IS NOT NULL THEN first_open_dt_ut
+  ELSE sent_dt_ut END, INTERVAL 1 DAY) THEN visit_session_id ELSE NULL END) as visits,
+COUNTIF(CASE WHEN event_dt_ut BETWEEN 
+CASE 
+  WHEN click_dt IS NOT NULL THEN first_click_dt_ut
+  WHEN open_dt IS NOT NULL THEN first_open_dt_ut
+  ELSE sent_dt_ut END
+AND DATE_ADD(CASE 
+  WHEN click_dt IS NOT NULL THEN first_click_dt_ut
+  WHEN open_dt IS NOT NULL THEN first_open_dt_ut
+  ELSE sent_dt_ut END, INTERVAL 1 DAY) THEN ((page_event_type_id = 0 OR post_page_nm is not null) OR page_event_type_id IN (10,11,12)) AND page_event_type_id = 0 ELSE NULL END) AS page_views,
+FROM  `i-dss-news-data.dw_vw.omniture_event_cdm`cdm
+RIGHT JOIN cmpgn_data_salesforce cdsf
+ON post_evar69_desc = cbs_reg_user_id_cd
+WHERE report_suite_id_nm = 'cbsicbsnewssite'
+AND day_dt BETWEEN  '2023-05-01' AND CURRENT_DATE()
+--AND day_dt BETWEEN DATE_SUB(CURRENT_DATE, INTERVAL 3 DAY) AND CURRENT_DATE
+--AND post_evar69_desc IS NOT NULL
+group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
+
+
+
+
+#SFMC CAMPAIGN
+
+CREATE OR REPLACE TABLE `i-dss-news-data.nm_temp.sfmc_news_campaign_perf` AS
+SELECT 
+cbs_reg_user_id_cd, 
+src_system_id,
+email_subject_desc,  
+campaign_email_nm,  
+sent_dt,  
+bounce_dt,
+sent_dt_ut, 
+EXTRACT(DATE FROM first_open_dt_ut) AS open_dt,
+first_open_dt_ut, 
+EXTRACT(DATE FROM first_click_dt_ut) AS click_dt,
+first_click_dt_ut,  
+job_id, 
+batch_id,
+case when campaign_email_nm LIKE '%CBS Mornings%' 
+       then 'CBS Mornings - Eye Opener'
+       when campaign_email_nm LIKE '%America Decides%'  
+       then 'America Decides'
+       when campaign_email_nm LIKE '%Breaking News%'  
+       then 'Breaking News'
+       when campaign_email_nm LIKE '%The Uplift%'  
+       then 'The Uplift'
+       when campaign_email_nm LIKE '%Sunday Morning%'  
+       then 'Sunday Morning'
+       when campaign_email_nm LIKE '%48 Hours%'  
+       then '48 Hours'
+       when campaign_email_nm LIKE '%60 Minutes%'  
+       then '60 Minutes'
+       --else 'Other' 
+       end as Show
+FROM `i-dss-news-data.dw_vw.vw_news_sfmc_campaign_performance_day`  
+WHERE sent_dt BETWEEN '2023-05-01' AND CURRENT_DATE
+--WHERE sent_dt BETWEEN DATE_SUB(CURRENT_DATE, INTERVAL 121 DAY) AND CURRENT_DATE
+--WHERE sent_dt BETWEEN  '2023-05-01' AND '2023-09-26'
+AND campaign_email_nm NOT IN ('cbsnews_welcome',
+'cbsnews_welcome_frictionless',
+'CBS Essentials Welcome Email',
+'cbsnews_password',
+'cbsnews_clc',
+'cbsnews_prism_expiration_stage',
+'prism_expiration_notification',
+'cbsnews_clc_stage',
+'cbsnews_password_stage',
+'staging_cbsnews_welcome')
+
+AND campaign_email_nm not like '%180DayClicked%'
+GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13
+
+
+#SFMC SUBS DATA
+
+CREATE OR REPLACE TABLE `i-dss-news-data.nm_temp.sfmc_news_subs_only` AS
+WITH cmpgn_data_salesforce AS(
+SELECT 
+cbs_reg_user_id_cd, 
+src_system_id,
+email_subject_desc,  
+campaign_email_nm,  
+sent_dt,  
+bounce_dt,
+sent_dt_ut, 
+EXTRACT(DATE FROM first_open_dt_ut) AS open_dt,
+first_open_dt_ut, 
+EXTRACT(DATE FROM first_click_dt_ut) AS click_dt,
+first_click_dt_ut,  
+job_id, batch_id
+FROM `i-dss-news-data.dw_vw.vw_news_sfmc_campaign_performance_day`  
+WHERE sent_dt BETWEEN  '2023-05-01' AND CURRENT_DATE()
+AND campaign_email_nm NOT IN ('cbsnews_welcome',
+'cbsnews_welcome_frictionless',
+'CBS Essentials Welcome Email',
+'cbsnews_password',
+'cbsnews_clc',
+'cbsnews_prism_expiration_stage',
+'prism_expiration_notification',
+'cbsnews_clc_stage',
+'cbsnews_password_stage',
+'staging_cbsnews_welcome')
+AND campaign_email_nm not like '%180DayClicked%'
+--AND day_dt BETWEEN DATE_SUB(CURRENT_DATE, INTERVAL 3 DAY) AND CURRENT_DATE
+GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13
+)
+
+SELECT
+  
+cdsf.cbs_reg_user_id_cd
+, cdsf.email_subject_desc
+, CDSF.sent_dt
+, cdsf.campaign_email_nm
+, cdsf.sent_dt_ut
+, cdsf.bounce_dt
+, cdsf.first_open_dt_ut
+, cdsf.first_click_dt_ut
+, cdsf.open_dt
+, cdsf.click_dt
+, sub_camp.external_id
+, sub_camp.is_opted_out_ind
+, TO_JSON_STRING(sub_camp.subscription_list) as subs
+, ARRAY_LENGTH(sub_camp.subscription_list) as subs_length
+FROM `i-dss-ent-data.ent_vw.sfmc_news_subscriptions_fct` sub_camp 
+RIGHT JOIN cmpgn_data_salesforce cdsf
+ON sub_camp.external_id = cbs_reg_user_id_cd
+AND sent_dt BETWEEN  '2023-05-01' AND CURRENT_DATE()
+
+--AND day_dt BETWEEN DATE_SUB(CURRENT_DATE, INTERVAL 3 DAY) AND CURRENT_DATE
+group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14
+--ORDER BY day_dt DESC

@@ -1,0 +1,221 @@
+i-dss-news-data.dw_vw.news_listen_first_brand_facebook_day
+i-dss-news-data.dw_vw.news_listen_first_brand_instagram_day
+i-dss-news-data.dw_vw.news_listen_first_brand_tiktok_day
+i-dss-news-data.dw_vw.news_listen_first_brand_twitter_day
+i-dss-news-data.dw_vw.news_listen_first_brand_youtube_day
+
+SELECT distinct(brand_nm) 
+FROM `i-dss-news-data.dw_vw.news_listen_first_brand_facebook_day`
+where set_nm = 'API_Internal_News_Competitive_Social_Accounts'
+
+For CBS NEWS :  ABC News, NBC News 
+For CBS MORNINGS : Good Morning America, The Today Show
+For CBS EVENING NEWS: ABC World News Tonight, NBC Nightly News
+For 48 HOURS: Dateline NBC, 20/20
+For FACE THE NATION : ABC This Week, Fox News Sunday, Meet the Press, State of the Union
+60 MINUTES
+CBS SUNDAY MORNINGS
+
+Social Dashboard CBS News Digital
+Note: Tiktok Video Views and State of the Union data currently unavailable. We are actively working to integrate this data into the dashboard.
+
+FB:
+SELECT sum(new_posts_cnt) AS New_Posts, sum(page_video_views) as Page_VideoViews, total_fans_cnt as Total_Fans, new_fans_cnt as New_Followers
+FROM `i-dss-news-data.dw_vw.news_listen_first_brand_facebook_day`
+where start_dt between '2021-12-31' and '2021-12-31'
+and brand_nm = 'CBS News'
+group by 3,4
+
+SELECT brand_nm,start_dt,(new_posts_cnt) AS New_Posts, (public_video_views_cnt) as Public_VideoViews, total_fans_cnt as Total_Fans, new_fans_cnt as New_Followers, (engagements) as Engagement
+FROM `i-dss-news-data.dw_vw.news_listen_first_brand_facebook_day`
+group by 1,2,3,4,5,6,7
+
+TW:
+SELECT sum(new_posts) AS New_Posts, sum(organic_video_views) as Organic_VideoViews, total_followers as Total_Followers, new_followers as New_Followers
+FROM `i-dss-news-data.dw_vw.news_listen_first_brand_twitter_day`
+where start_dt between '2021-12-31' and '2021-12-31'
+and brand_nm = 'CBS News'
+group by 3,4
+
+SELECT brand_nm,start_dt,(new_posts) AS New_Posts, (new_public_video_views) as Public_VideoViews, total_followers as Total_Fans, new_followers as New_Followers, (engagements) as Engagement
+FROM `i-dss-news-data.dw_vw.news_listen_first_brand_twitter_day`
+group by 1,2,3,4,5,6,7
+
+IG:
+SELECT  new_followers_cnt as New_Followers ,new_posts as New_Posts, organic_video_views as Organic_VideoViews ,total_followers as Total_Followers
+FROM `i-dss-news-data.dw_vw.news_listen_first_brand_instagram_day`
+where start_dt between '2021-12-31' and '2021-12-31'
+and brand_nm = 'CBS News'
+
+SELECT brand_nm,start_dt,(new_posts) AS New_Posts, (organic_video_views) as Public_VideoViews, total_followers as Total_Fans, new_followers_cnt as New_Followers, (engagement_score) as Engagement
+FROM `i-dss-news-data.dw_vw.news_listen_first_brand_instagram_day`
+group by 1,2,3,4,5,6,7
+
+TikTok:
+SELECT  new_followers as New_Followers, new_posts as New_Posts, total_followers as Total_Followers
+FROM `i-dss-news-data.dw_vw.news_listen_first_brand_tiktok_day`
+where start_dt between '2021-12-31' and '2021-12-31'
+and brand_nm = 'CBS News'
+
+
+
+
+Youtube:
+SELECT  brand_nm,new_subscribers as New_Followers ,new_official_videos_cnt as New_Posts,new_official_video_views  as VideoViews ,total_subscribers as Total_Followers, engagements
+FROM `i-dss-news-data.dw_vw.news_listen_first_brand_youtube_day`
+where start_dt = '2022-06-01'
+and brand_nm like 'ABC News%'
+
+
+https://experience.adobe.com/#/@cbsi/so:cbsint2/analytics/spa/index.html?lazyLoadPhpSession=1&ssSession=39f26507231859c3d92dfd6310986948&jpj=4700234808687#/workspace/edit/617301ebe9d2443854fc083d?projectId=617301ebe9d2443854fc083d
+https://www5.an.adobe.com/x/5_hn0g2
+
+
+
+CONTENT LEVEL VIEWS:
+i-dss-news-data.news_vw.listenfirst_youtube_content
+i-dss-news-data.news_vw.listenfirst_tiktok_content
+i-dss-news-data.news_vw.listenfirst_twitter_content
+i-dss-news-data.news_vw.listenfirst_instagram_story_content
+i-dss-news-data.news_vw.listenfirst_instagram_content
+i-dss-news-data.news_vw.listenfirst_facebook_content
+
+
+
+CASE [TrendCompare]
+
+WHEN "Engagements" THEN (CASE [Platform] WHEN "news_listen_first_brand_facebook_day" THEN [Engagements]
+                                         WHEN "news_listen_first_brand_instagram_day" THEN [organic_engagements (news_listen_first_brand_facebook_day+)]
+                                         WHEN "news_listen_first_brand_twitter_day" THEN [Engagements]
+                                         WHEN "news_listen_first_brand_tiktok_day" THEN [Engagements]
+ END)
+
+WHEN "Video Views" THEN (CASE [Platform] WHEN "news_listen_first_brand_facebook_day" THEN [Public Video Views Cnt]
+                                         WHEN "news_listen_first_brand_instagram_day" THEN [video_views (news_listen_first_brand_facebook_day+)]
+                                         WHEN "news_listen_first_brand_twitter_day" THEN [new_public_video_views (news_listen_first_brand_facebook_day+)]
+                                         WHEN "news_listen_first_brand_tiktok_day" THEN [public_video_views (news_listen_first_brand_facebook_day+)]
+ END)
+
+END
+
+
+
+
+----------------------------------------------------
+1) twitter - no issues with 48 hours, but issues with 60 minutes
+https://app.listenfirstmedia.com/#s/c7PlJSU
+select *
+from `i-dss-news-data.news_vw.listenfirst_twitter_content`
+where published_dt = '2022-11-01'
+and brand_view_nm like '60%'
+order by published_dt, engagements_cnt desc
+
+2) duplicate rows in all the tables
+3) facebook NY : issues with matching enaggement metrics
+https://app.listenfirstmedia.com/#s/9SVPpp0
+select *
+from `i-dss-news-data.news_vw.listenfirst_facebook_content`
+where published_dt = '2022-11-01'
+and brand_view_nm like 'CBS New York%'
+order by published_dt, engagements_cnt desc
+
+
+4) tiktok data is not same in bq vs lf for 48 hours
+https://app.listenfirstmedia.com/#s/8bcTlL0
+select *
+from `i-dss-news-data.news_vw.listenfirst_tiktok_content`
+where published_dt = '2022-11-01'
+and brand_view_nm like '48%'
+order by published_dt, engagements_cnt desc
+
+
+tiktok:
+public_video_views
+public_video_views_cnt
+tiktok data is not same in bq vs lf
+
+abc news, nbc news - video_views
+
+
+
+-------------------------------------------
+
+API Internal News Social Accounts: https://app.listenfirstmedia.com/#s/tQ_U7xc
+API Internal News Competitive Social Accounts: https://app.listenfirstmedia.com/#explore/competitive/rankings?brand_set_id=6949&account_id=181&from=2022-11-09&to=2022-11-15&compare_from=2022-11-02&compare_to=2022-11-08&channels=facebook&channels=twitter&channels=instagram&perspective=standard&rank_by_metric=lfm.engagement_score.digital_audience_rating
+
+
+
+
+
+
+select  content_id,content_text,content_type_cd, brand_view_nm as Brand,sum(engagements_cnt) as engagements,sum(public_views_cnt) as Video_Views, sum(post_comments_cnt) as comments, sum(post_likes_cnt) as likes, sum(post_shares_cnt) as shares
+from `i-dss-news-data.news_vw.listenfirst_facebook_content`
+where published_dt = '2022-05-20'
+and brand_view_nm like '48 Hour%'
+group by 1,2,3,4
+order by 5 desc
+
+--------------------
+select  content_id,content_text,content_type_cd,brand_view_nm as Brand,sum(engagements_cnt) as engagements,sum(video_views_cnt) as Video_Views, sum(total_post_comments) as comments, sum(video_likes) as likes, sum(post_shares_cnt) as shares
+from `i-dss-news-data.news_vw.listenfirst_tiktok_content`
+where published_dt = '2022-05-01'
+and brand_view_nm like 'CBS Face%'
+group by 1,2,3,4
+order by 5 desc
+-------------------------------
+select  content_id,content_text,content_type,brand_view_nm as Brand,sum(engagements_cnt) as engagements,sum(video_views_cnt) as Video_Views, sum(total_replies_cnt) as comments, sum(total_reactions_cnt) as likes, sum(total_retweets_cnt) as shares
+from `i-dss-news-data.news_vw.listenfirst_twitter_content`
+where published_dt = '2022-05-20'
+and brand_view_nm like '20/20%'
+--and video_views_cnt>0
+group by 1,2,3,4
+order by 5 desc
+--------------------------
+select  content_id,content_text,content_type_cd,brand_view_nm as Brand,sum(engagements_cnt) as engagements,sum(video_views_cnt) as Video_Views,sum(total_comments_cnt) as comments, sum(total_likes_cnt) as likes
+from `i-dss-news-data.news_vw.listenfirst_instagram_content`
+where published_dt = '2022-05-20'
+and brand_view_nm like '20/20%'
+group by 1,2,3,4
+order by 5 desc
+----------------------------
+select  content_id,content_text,brand_view_nm as Brand,sum(video_views_cnt) as Video_Views, sum(video_comments_cnt) as comments, sum(video_likes_cnt) as likes, sum(video_interactions_cnt) as interactions
+from `i-dss-news-data.news_vw.listenfirst_youtube_content`
+where published_dt = '2022-05-26'
+and brand_view_nm like 'NBC News%'
+group by 1,2,3
+order by 4 desc
+------------------------------
+select content_id,content_text,content_type_cd,brand_view_nm as Brand,sum(daily_story_reach_avg) as Sroty_Reac, sum(new_story_exits_cnt) as Story_Exits, sum(dm_replies_cnt) as Story_Replies, 
+from `i-dss-news-data.news_vw.listenfirst_instagram_story_content`
+where brand_view_nm like 'CBS News%'
+and published_dt = '2022-06-07'
+group by 1,2,3,4
+order by 5 desc
+
+
+
+
+
+select  content_id,content_text,content_type_cd, brand_view_nm as Brand,published_dt,published_dt_ut,text_link,channel_nm,sum(engagements_cnt) as Instagram_Engagements,sum(video_views_cnt) as Instagram_Video_Views, sum(total_comments_cnt) as Instagram_Comments, sum(total_likes_cnt) as Instagram_Likes
+from `i-dss-news-data.news_vw.listenfirst_instagram_content`
+group by 1,2,3,4,5,6,7,8
+
+select  content_id,content_text,content_type_cd, brand_view_nm as Brand,published_dt,published_dt_ut,text_link,channel_nm,sum(engagements_cnt) as Tiktok_Engagements,sum(video_views_cnt) as Tiktok_Video_Views, sum(total_post_comments) as Tiktok_Comments, sum(video_likes) as Tiktok_Likes, sum(post_shares_cnt) as Tiktok_Shares
+from `i-dss-news-data.news_vw.listenfirst_tiktok_content`
+group by 1,2,3,4,5,6,7,8
+
+
+select  content_id,content_text,content_type_cd, brand_view_nm as Brand,published_dt,published_dt_ut,text_link,channel_nm,sum(engagements_cnt) as Twitter_Engagements,sum(video_views_cnt) as Twitter_Video_Views, sum(total_replies_cnt) as Twitter_Comments, sum(post_likes_cnt) as Twitter_Likes, sum(total_retweets_cnt) as Twitter_Shares
+from `i-dss-news-data.news_vw.listenfirst_twitter_content`
+group by 1,2,3,4,5,6,7,8
+
+
+
+select  content_id,content_text,content_type_cd, brand_view_nm as Brand,published_dt,published_dt_ut,text_link,channel_nm,sum(engagements_cnt) as Facebook_Engagements,sum(public_views_cnt) as Facebook_Video_Views, sum(post_comments_cnt) as Facebook_Comments, sum(post_likes_cnt) as Facebook_Likes, sum(post_shares_cnt) as Facebook_Shares
+from `i-dss-news-data.news_vw.listenfirst_facebook_content`
+group by 1,2,3,4,5,6,7,8
+
+
+DATEADD('hour', -8, [published_dt_ut])
+
+
